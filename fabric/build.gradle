@@ -16,7 +16,6 @@ subprojects {
 	}
 
 	dependencies {
-		implementation project(':neoforge')
 		implementation project(":common")
 		minecraft "com.mojang:minecraft:${buildTools.minecraftVersion}"
 		mappings "net.fabricmc:yarn:${buildTools.getYarnVersion()}:v2"
