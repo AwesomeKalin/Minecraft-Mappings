@@ -57,3 +57,5 @@ subprojects {
 		configureEach { javadoc.options.addStringOption("Xdoclint:none", "-quiet") }
 	}
 }
+
+dependsOn neoforge
