@@ -1,0 +1,59 @@
+import org.mtr.mapping.BuildTools
+
+plugins {
+	id "java"
+	id "net.neoforged.gradle.userdev" version "+" apply false
+}
+
+subprojects {
+	apply plugin: "java"
+	apply plugin: "net.neoforged.gradle.userdev"
+
+	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
+	final minecraftVersion = buildTools.minecraftVersion
+
+	sourceSets.main.resources { srcDir "src/generated/resources" }
+
+	dependencies {
+		implementation project(":common")
+		implementation "net.neoforged:neoforge:${buildTools.getNeoForgeVersion()}"
+		testImplementation "org.junit.jupiter:junit-jupiter-api:+"
+		testImplementation "com.google.code.gson:gson:+"
+		testImplementation "org.reflections:reflections:+"
+		testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:+"
+	}
+
+	java {
+		toolchain {
+			languageVersion.set(JavaLanguageVersion.of(buildTools.javaLanguageVersion))
+		}
+		withSourcesJar()
+		withJavadocJar()
+	}
+
+	jar {
+		doLast {
+			buildTools.copyBuildFile(true)
+		}
+	}
+
+	build {
+		doLast {
+			buildTools.copyBuildFile(false)
+		}
+	}
+
+	test {
+		useJUnitPlatform()
+		testLogging { showStandardStreams = true }
+	}
+
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = false
+		reproducibleFileOrder = true
+	}
+
+	tasks.withType(Javadoc).tap {
+		configureEach { javadoc.options.addStringOption("Xdoclint:none", "-quiet") }
+	}
+}

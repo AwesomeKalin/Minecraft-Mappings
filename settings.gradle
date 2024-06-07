@@ -2,6 +2,7 @@ pluginManagement {
 	repositories {
 		maven { url = "https://maven.fabricmc.net/" }
 		maven { url = "https://maven.minecraftforge.net/" }
+		maven { url = 'https://maven.neoforged.net/releases' }
 		mavenCentral()
 		gradlePluginPortal()
 	}
@@ -40,5 +41,6 @@ include("forge:1.19.2-generator")
 include("forge:1.19.4-generator")
 include("forge:1.20.1-generator")
 include("forge:1.20.4-generator")
+include("neoforge:1.20.4-generator")
 
 rootProject.name = "Minecraft-Mappings"
