@@ -14,6 +14,14 @@ subprojects {
 
 	sourceSets.main.resources { srcDir "src/generated/resources" }
 
+	java {
+		toolchain {
+			languageVersion.set(JavaLanguageVersion.of(buildTools.javaLanguageVersion))
+		}
+		withSourcesJar()
+		withJavadocJar()
+	}
+
 	dependencies {
 		implementation project(":common")
 		implementation "net.neoforged:neoforge:${buildTools.getNeoForgeVersion()}"
@@ -21,14 +29,6 @@ subprojects {
 		testImplementation "com.google.code.gson:gson:+"
 		testImplementation "org.reflections:reflections:+"
 		testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:+"
-	}
-
-	java {
-		toolchain {
-			languageVersion.set(JavaLanguageVersion.of(buildTools.javaLanguageVersion))
-		}
-		withSourcesJar()
-		withJavadocJar()
 	}
 
 	jar {

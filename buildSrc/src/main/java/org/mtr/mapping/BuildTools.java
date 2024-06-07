@@ -169,7 +169,6 @@ public final class BuildTools {
 				latestVersion[0] = version.getAsString();
 			}
 		});
-		System.out.println(latestVersion[0]);
 		return latestVersion[0];
 	}
 
