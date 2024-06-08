@@ -2,14 +2,18 @@ import org.mtr.mapping.BuildTools
 
 plugins {
 	id "java"
-	id "net.neoforged.gradle.userdev" version "+" apply false
+	id "net.minecraftforge.gradle" version "+" apply false
 }
 
 subprojects {
 	apply plugin: "java"
-	apply plugin: "net.neoforged.gradle.userdev"
+	apply plugin: "net.minecraftforge.gradle"
 
 	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
+
+	minecraft {
+		file('src/main/resources/accesstransformer_extras.cfg')
+	}
 
 	sourceSets.main.resources { srcDir "src/generated/resources" }
 
