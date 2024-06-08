@@ -3,14 +3,15 @@ import org.mtr.mapping.BuildTools
 plugins {
 	id "java"
 	id "net.neoforged.gradle.userdev" version "+" apply false
+	id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.7" apply false
 }
 
 subprojects {
+	apply plugin: "org.jetbrains.gradle.plugin.idea-ext"
 	apply plugin: "java"
 	apply plugin: "net.neoforged.gradle.userdev"
 
 	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
-	final minecraftVersion = buildTools.minecraftVersion
 
 	sourceSets.main.resources { srcDir "src/generated/resources" }
 
