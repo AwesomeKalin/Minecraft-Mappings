@@ -14,6 +14,7 @@ import org.mtr.mapping.holder.Identifier;
 import org.mtr.mapping.holder.Item;
 import org.mtr.mapping.holder.SoundEvent;
 import org.mtr.mapping.mapper.BlockEntityExtension;
+import org.mtr.mapping.mapper.BlockExtension;
 import org.mtr.mapping.mapper.BlockItemExtension;
 import org.mtr.mapping.mapper.EntityExtension;
 
@@ -36,20 +37,20 @@ public final class ModEventBus {
 
 	@SubscribeEvent
 	public void register(RegisterEvent event) {
-		event.register(BuiltInRegistries.BLOCK, helper -> BLOCKS.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get().data)));
+		event.register(BuiltInRegistries.BLOCK, helper -> BLOCKS.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get().data)));
 		event.register(BuiltInRegistries.ITEM, helper -> {
-			BLOCK_ITEMS.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get()));
-			ITEMS.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get().data));
+			BLOCK_ITEMS.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get()));
+			ITEMS.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get()));
 		});
-		event.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, helper -> blockEntityTypes.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get())));
-		event.register(BuiltInRegistries.ENTITY_TYPE, helper -> entityTypes.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get())));
-		event.register(BuiltInRegistries.PARTICLE_TYPE, helper -> particleTypes.forEach((identifier, supplier) -> helper.register(identifier.data, () -> supplier.get())));
+		event.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, helper -> blockEntityTypes.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get())));
+		event.register(BuiltInRegistries.ENTITY_TYPE, helper -> entityTypes.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get())));
+		event.register(BuiltInRegistries.PARTICLE_TYPE, helper -> particleTypes.forEach((identifier, supplier) -> helper.register(identifier.data, supplier.get())));
 		event.register(Registries.CREATIVE_MODE_TAB, helper -> creativeModeTabs.forEach(creativeModeTabHolder -> helper.register(creativeModeTabHolder.identifier, CreativeModeTab.builder()
 				.title(Component.translatable(String.format("itemGroup.%s.%s", creativeModeTabHolder.identifier.getNamespace(), creativeModeTabHolder.identifier.getPath())))
 				.icon(() -> creativeModeTabHolder.iconSupplier.get().data)
 				.displayItems((params, output) -> creativeModeTabHolder.itemSuppliers.forEach(itemSupplier -> output.accept(itemSupplier.get().data)))
 				.build()
 		)));
-		event.register(BuiltInRegistries.SOUND_EVENT, helper -> soundEvents.forEach(((identifier, supplier) -> helper.register(identifier.data, ()-> supplier.get().data))));
+		event.register(BuiltInRegistries.SOUND_EVENT, helper -> soundEvents.forEach(((identifier, supplier) -> helper.register(identifier.data, supplier.get()))));
 	}
 }

@@ -16,8 +16,8 @@ public final class RenderLayerHelper {
 				expectedBufferSize,
 				hasCrumbling,
 				translucent,
-				((RenderType.CompositeRenderType) renderLayerForPhase.data).state
-		));
+                RenderType.CompositeState.builder().createCompositeState(true)
+        ));
 	}
 
 	@MappedMethod
@@ -29,7 +29,7 @@ public final class RenderLayerHelper {
 				expectedBufferSize,
 				hasCrumbling,
 				translucent,
-				((RenderType.CompositeRenderType) renderLayerForPhase.data).state
+				RenderType.CompositeState.builder().createCompositeState(true)
 		));
 	}
 }

@@ -2,12 +2,12 @@ import org.mtr.mapping.BuildTools
 
 plugins {
 	id "java"
-	id "net.minecraftforge.gradle" version "+" apply false
+	id "net.neoforged.gradle.userdev" version "7.0.97" apply false
 }
 
 subprojects {
 	apply plugin: "java"
-	apply plugin: "net.minecraftforge.gradle"
+	apply plugin: "net.neoforged.gradle.userdev"
 
 	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
 
