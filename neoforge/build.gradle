@@ -13,7 +13,9 @@ subprojects {
 	final minecraftVersion = buildTools.minecraftVersion
 
 	minecraft {
-		accessTransformer = file("src/main/resources/accesstransformer.cfg")
+		accessTransformers {
+    			file('src/main/resources/accesstransformer.cfg')
+  		}
 	}
 
 	sourceSets.main.resources { srcDir "src/generated/resources" }
