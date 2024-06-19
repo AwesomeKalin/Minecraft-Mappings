@@ -12,7 +12,8 @@ subprojects {
 	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
 
 	minecraft {
-		file('src/main/resources/accesstransformer_extras.cfg')
+		mappings channel: "official", version: minecraftVersion
+		accessTransformer = file("src/main/resources/accesstransformer.cfg")
 	}
 
 	sourceSets.main.resources { srcDir "src/generated/resources" }
