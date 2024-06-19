@@ -10,6 +10,7 @@ subprojects {
 	apply plugin: "net.neoforged.gradle.userdev"
 
 	final BuildTools buildTools = new BuildTools(project, rootProject.getProperties().getOrDefault("generate", "").toString())
+	final minecraftVersion = buildTools.minecraftVersion
 
 	minecraft {
 		mappings channel: "official", version: minecraftVersion
