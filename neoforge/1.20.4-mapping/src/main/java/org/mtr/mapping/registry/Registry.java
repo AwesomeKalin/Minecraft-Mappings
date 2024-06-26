@@ -2,17 +2,21 @@ package org.mtr.mapping.registry;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
@@ -33,9 +37,10 @@ import java.util.function.Supplier;
 public final class Registry extends DummyClass {
 
 	RegisterPayloadHandlerEvent simpleChannel;
+	IPayloadRegistrar networkChannel;
 	private final MainEventBus mainEventBus = new MainEventBus();
 	private final ModEventBus modEventBus = new ModEventBus();
-	final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> packets = new HashMap<>();
+	public static final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> packets = new HashMap<>();
 	public final EventRegistry eventRegistry = new EventRegistry(mainEventBus);
 	private static final int PROTOCOL_VERSION = 1;
 
@@ -129,25 +134,12 @@ public final class Registry extends DummyClass {
 		});
 	}
 
-	/*@MappedMethod
+	@MappedMethod
 	public void setupPackets(Identifier identifier) {
-		simpleChannel = RegisterPayloadHandlerEvent.registrar(identifier.data.toString()).versioned(PROTOCOL_VERSION).clientAcceptedVersions(Registry::validProtocol).serverAcceptedVersions(Registry::validProtocol).simpleChannel();
-		simpleChannel.messageBuilder(PacketObject.class, 0).encoder((packetObject, packetBuffer) -> packetBuffer.writeBytes(packetObject.byteBuf)).decoder(packetBuffer -> new PacketObject(packetBuffer.readBytes(packetBuffer.readableBytes()))).consumerNetworkThread((packetObject, context) -> {
-			PacketBufferReceiver.receive(packetObject.byteBuf, packetBufferReceiver -> {
-				final Function<PacketBufferReceiver, ? extends PacketHandler> getPacketInstance = packets.get(packetBufferReceiver.readString());
-				if (getPacketInstance != null) {
-					final PacketHandler packetHandler = getPacketInstance.apply(packetBufferReceiver);
-					if (context.getDirection().getReceptionSide().isClient()) {
-						packetHandler.runClient();
-					} else {
-						final ServerPlayer serverPlayerEntity = context.getSender();
-						if (serverPlayerEntity != null) {
-							packetHandler.runServer(new MinecraftServer(serverPlayerEntity.server), new ServerPlayerEntity(serverPlayerEntity));
-						}
-					}
-				}
-			}, context::enqueueWork);
-		}).add();
+		networkChannel = simpleChannel.registrar(identifier.getNamespace()).versioned(String.valueOf(PROTOCOL_VERSION));
+		networkChannel.play(identifier.data, PacketObject::new, handler -> handler
+				.client(ClientPayloadHandler.getInstance()::handleData)
+				.server(ServerPayloadHandler.getInstance()::handleData));
 	}
 
 	@MappedMethod
@@ -161,20 +153,26 @@ public final class Registry extends DummyClass {
 			final PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
 			packetBufferSender.writeString(data.getClass().getName());
 			data.write(packetBufferSender);
-			packetBufferSender.send(byteBuf -> simpleChannel.send(new PacketObject(byteBuf), PacketDistributor.PLAYER.with(serverPlayerEntity.data)), serverPlayerEntity.getServerMapped()::execute);
+			packetBufferSender.send(byteBuf -> PacketDistributor.PLAYER.with(serverPlayerEntity.data).send(new PacketObject((FriendlyByteBuf) byteBuf)), serverPlayerEntity.getServerMapped()::execute);
 		}
 	}
 
-	private static boolean validProtocol(Channel.VersionTest.Status status, int version) {
-		return version == PROTOCOL_VERSION || status == Channel.VersionTest.Status.VANILLA || status == Channel.VersionTest.Status.MISSING;
-	}
+	public static class PacketObject implements CustomPacketPayload {
 
-	static class PacketObject {
+		final FriendlyByteBuf byteBuf;
 
-		final ByteBuf byteBuf;
-
-		PacketObject(ByteBuf byteBuf) {
+		PacketObject(FriendlyByteBuf byteBuf) {
 			this.byteBuf = byteBuf;
 		}
-	}*/
+
+		@Override
+		public void write(FriendlyByteBuf friendlyByteBuf) {
+
+		}
+
+		@Override
+		public ResourceLocation id() {
+			return null;
+		}
+	}
 }

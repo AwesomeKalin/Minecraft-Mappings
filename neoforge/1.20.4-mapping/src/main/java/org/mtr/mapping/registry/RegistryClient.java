@@ -94,15 +94,15 @@ public final class RegistryClient extends DummyClass {
 	public void setupPackets(Identifier identifier) {
 	}
 
-	/*@MappedMethod
+	@MappedMethod
 	public <T extends PacketHandler> void sendPacketToServer(T data) {
-		if (registry.simpleChannel != null) {
+		/*if (registry.simpleChannel != null) {
 			final PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
 			packetBufferSender.writeString(data.getClass().getName());
 			data.write(packetBufferSender);
 			packetBufferSender.send(byteBuf -> registry.simpleChannel.send(new Registry.PacketObject(byteBuf), PacketDistributor.SERVER.noArg()), MinecraftClient.getInstance()::execute);
-		}
-	}*/
+		}*/
+	}
 
 	@FunctionalInterface
 	public interface ModelPredicateProvider {
