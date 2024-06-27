@@ -1,9 +1,11 @@
-package org.mtr.mapping.registry;
+package org.mtr.mapping.networking;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.PlayPayloadContext;
 import org.mtr.mapping.holder.MinecraftServer;
 import org.mtr.mapping.holder.ServerPlayerEntity;
+import org.mtr.mapping.registry.PacketHandler;
+import org.mtr.mapping.registry.Registry;
 import org.mtr.mapping.tool.PacketBufferReceiver;
 
 import java.util.Objects;
@@ -17,7 +19,7 @@ public class ServerPayloadHandler {
         return INSTANCE;
     }
 
-    public void handleData(final Registry.PacketObject data, final PlayPayloadContext context) {
+    public void handleData(final PacketObject data, final PlayPayloadContext context) {
         final FriendlyByteBuf byteBuf = data.byteBuf;
 
         PacketBufferReceiver.receive(byteBuf, packetBufferReceiver -> {

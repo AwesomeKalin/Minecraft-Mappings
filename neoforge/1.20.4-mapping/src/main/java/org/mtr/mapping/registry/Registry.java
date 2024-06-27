@@ -7,9 +7,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -22,6 +19,9 @@ import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
 import org.mtr.mapping.mapper.BlockItemExtension;
 import org.mtr.mapping.mapper.EntityExtension;
+import org.mtr.mapping.networking.ClientPayloadHandler;
+import org.mtr.mapping.networking.PacketObject;
+import org.mtr.mapping.networking.ServerPayloadHandler;
 import org.mtr.mapping.tool.DummyClass;
 import org.mtr.mapping.tool.HolderBase;
 import org.mtr.mapping.tool.PacketBufferReceiver;
@@ -154,25 +154,6 @@ public final class Registry extends DummyClass {
 			packetBufferSender.writeString(data.getClass().getName());
 			data.write(packetBufferSender);
 			packetBufferSender.send(byteBuf -> PacketDistributor.PLAYER.with(serverPlayerEntity.data).send(new PacketObject((FriendlyByteBuf) byteBuf)), serverPlayerEntity.getServerMapped()::execute);
-		}
-	}
-
-	public static class PacketObject implements CustomPacketPayload {
-
-		final FriendlyByteBuf byteBuf;
-
-		PacketObject(FriendlyByteBuf byteBuf) {
-			this.byteBuf = byteBuf;
-		}
-
-		@Override
-		public void write(FriendlyByteBuf friendlyByteBuf) {
-
-		}
-
-		@Override
-		public ResourceLocation id() {
-			return null;
 		}
 	}
 }
