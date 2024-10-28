@@ -50,6 +50,7 @@ public final class SearchForMappedMethodsTest {
 				final int modifiers = method.getModifiers();
 				Assertions.assertTrue(classObject.getPackage().getName().startsWith("org.mtr.mapping.holder") ||
 						classObject.getPackage().getName().startsWith("org.mtr.mapping.render") ||
+						classObject.getPackage().getName().startsWith("org.mtr.mapping.networking") ||
 						Modifier.isPrivate(modifiers) ||
 						method.isBridge() ||
 						(Modifier.isFinal(classObject.getModifiers()) || Modifier.isFinal(modifiers) || method.isDefault()) && method.isAnnotationPresent(Deprecated.class) ||

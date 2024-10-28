@@ -12,4 +12,6 @@ call gradlew common:build -x test
 call gradlew build -p fabric -x test
 @echo Build Forge
 call gradlew build -p forge -x test
+@echo Build Neoforge
+call gradlew build -p neoforge -x test
 pause
