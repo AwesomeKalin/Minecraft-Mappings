@@ -24,7 +24,7 @@ public final class ParticleTypeRegistryObject extends RegistryObject<DefaultPart
 	@MappedMethod
 	@Override
 	public DefaultParticleType get() {
-		return new DefaultParticleType((SimpleParticleType) registryObject.getEntries());
+		return new DefaultParticleType(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod

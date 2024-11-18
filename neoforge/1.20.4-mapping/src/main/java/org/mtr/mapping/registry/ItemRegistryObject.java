@@ -20,7 +20,7 @@ public final class ItemRegistryObject extends RegistryObject<Item> {
 	@MappedMethod
 	@Override
 	public Item get() {
-		return new Item((net.minecraft.world.item.Item) registryObject.getEntries());
+		return new Item(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod

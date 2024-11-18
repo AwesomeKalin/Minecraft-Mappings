@@ -21,7 +21,7 @@ public final class BlockEntityTypeRegistryObject<T extends BlockEntityExtension>
 	@MappedMethod
 	@Override
 	public BlockEntityType<T> get() {
-		return new BlockEntityType<>((net.minecraft.world.level.block.entity.BlockEntityType<T>) registryObject.getEntries());
+		return new BlockEntityType<>((net.minecraft.world.level.block.entity.BlockEntityType<T>) registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod

@@ -12,9 +12,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -43,20 +41,15 @@ public final class Registry extends DummyClass {
 	public static final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> packets = new HashMap<>();
 	public final EventRegistry eventRegistry = new EventRegistry(mainEventBus);
 	private static final int PROTOCOL_VERSION = 1;
-
-	public static final DeferredRegister<net.minecraft.world.level.block.Block> BLOCKS = DeferredRegister.create(
-			// The registry we want to use.
-			// Minecraft's registries can be found in BuiltInRegistries, NeoForge's registries can be found in NeoForgeRegistries.
-			// Mods may also add their own registries, refer to the individual mod's documentation or source code for where to find them.
-			BuiltInRegistries.BLOCK,
-			// Our mod id.
-			ModLoadingContext.get().getActiveContainer().getModId()
-	);
+	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
+	public static final DeferredRegister<net.minecraft.world.level.block.Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, modid);
+	public static final DeferredRegister<net.minecraft.world.item.Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, modid);
 
 	@MappedMethod
 	public void init() {
 		IEventBus eventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
 		BLOCKS.register(eventBus);
+		ITEMS.register(eventBus);
 		NeoForge.EVENT_BUS.register(mainEventBus);
 		//FMLJavaModLoadingContext.get().getModEventBus().register(modEventBus);
 	}
@@ -64,7 +57,6 @@ public final class Registry extends DummyClass {
 	@MappedMethod
 	public BlockRegistryObject registerBlock(Identifier identifier, Supplier<Block> supplier) {
 		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
-		modEventBus.BLOCKS.put(identifier, supplier);
 		return new BlockRegistryObject(identifier);
 	}
 
@@ -76,9 +68,8 @@ public final class Registry extends DummyClass {
 	@MappedMethod
 	public BlockRegistryObject registerBlockWithBlockItem(Identifier identifier, Supplier<Block> supplier, BiFunction<Block, ItemSettings, BlockItemExtension> function, CreativeModeTabHolder... creativeModeTabHolders) {
 		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
-		modEventBus.BLOCKS.put(identifier, supplier);
 		final BlockRegistryObject blockRegistryObject = new BlockRegistryObject(identifier);
-		modEventBus.BLOCK_ITEMS.put(identifier, () -> function.apply(blockRegistryObject.get(), new ItemSettings()));
+		ITEMS.register(identifier.getPath(), () -> function.apply(blockRegistryObject.get(), new ItemSettings()));
 		for (final CreativeModeTabHolder creativeModeTabHolder : creativeModeTabHolders) {
 			creativeModeTabHolder.itemSuppliers.add(new ItemRegistryObject(identifier)::get);
 		}
@@ -87,7 +78,7 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public ItemRegistryObject registerItem(Identifier identifier, Function<ItemSettings, Item> function, CreativeModeTabHolder... creativeModeTabHolders) {
-		modEventBus.ITEMS.put(identifier, () -> function.apply(new ItemSettings()));
+		ITEMS.register(identifier.getPath(), () -> function.apply(new ItemSettings()).data);
 		final ItemRegistryObject itemRegistryObject = new ItemRegistryObject(identifier);
 		for (final CreativeModeTabHolder creativeModeTabHolder : creativeModeTabHolders) {
 			creativeModeTabHolder.itemSuppliers.add(itemRegistryObject::get);

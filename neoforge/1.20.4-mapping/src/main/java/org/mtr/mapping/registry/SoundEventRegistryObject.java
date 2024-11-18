@@ -20,7 +20,7 @@ public final class SoundEventRegistryObject extends RegistryObject<SoundEvent> {
 	@MappedMethod
 	@Override
 	public SoundEvent get() {
-		return new SoundEvent((net.minecraft.sounds.SoundEvent) registryObject.getEntries());
+		return new SoundEvent(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod

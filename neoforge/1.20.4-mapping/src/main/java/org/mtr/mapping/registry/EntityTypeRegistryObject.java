@@ -21,7 +21,7 @@ public final class EntityTypeRegistryObject<T extends EntityExtension> extends R
 	@MappedMethod
 	@Override
 	public EntityType<T> get() {
-		return new EntityType<T>((net.minecraft.world.entity.EntityType<T>) registryObject.getEntries());
+		return new EntityType<T>((net.minecraft.world.entity.EntityType<T>) registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod
