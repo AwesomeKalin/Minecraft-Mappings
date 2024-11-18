@@ -20,7 +20,7 @@ public final class BlockRegistryObject extends RegistryObject<Block> {
 	@MappedMethod
 	@Override
 	public Block get() {
-		return new Block((net.minecraft.world.level.block.Block) registryObject.getEntries());
+		return new Block(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
 	}
 
 	@MappedMethod

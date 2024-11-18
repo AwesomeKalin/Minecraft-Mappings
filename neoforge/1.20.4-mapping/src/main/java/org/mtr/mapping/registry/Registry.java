@@ -6,22 +6,24 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
-import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
 import org.mtr.mapping.mapper.BlockItemExtension;
 import org.mtr.mapping.mapper.EntityExtension;
-import org.mtr.mapping.networking.ClientPayloadHandler;
 import org.mtr.mapping.networking.PacketObject;
-import org.mtr.mapping.networking.ServerPayloadHandler;
 import org.mtr.mapping.tool.DummyClass;
 import org.mtr.mapping.tool.HolderBase;
 import org.mtr.mapping.tool.PacketBufferReceiver;
@@ -36,22 +38,32 @@ import java.util.function.Supplier;
 
 public final class Registry extends DummyClass {
 
-	RegisterPayloadHandlerEvent simpleChannel;
-	IPayloadRegistrar networkChannel;
 	private final MainEventBus mainEventBus = new MainEventBus();
 	private final ModEventBus modEventBus = new ModEventBus();
 	public static final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> packets = new HashMap<>();
 	public final EventRegistry eventRegistry = new EventRegistry(mainEventBus);
 	private static final int PROTOCOL_VERSION = 1;
 
+	public static final DeferredRegister<net.minecraft.world.level.block.Block> BLOCKS = DeferredRegister.create(
+			// The registry we want to use.
+			// Minecraft's registries can be found in BuiltInRegistries, NeoForge's registries can be found in NeoForgeRegistries.
+			// Mods may also add their own registries, refer to the individual mod's documentation or source code for where to find them.
+			BuiltInRegistries.BLOCK,
+			// Our mod id.
+			ModLoadingContext.get().getActiveContainer().getModId()
+	);
+
 	@MappedMethod
 	public void init() {
+		IEventBus eventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
+		BLOCKS.register(eventBus);
 		NeoForge.EVENT_BUS.register(mainEventBus);
 		//FMLJavaModLoadingContext.get().getModEventBus().register(modEventBus);
 	}
 
 	@MappedMethod
 	public BlockRegistryObject registerBlock(Identifier identifier, Supplier<Block> supplier) {
+		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
 		modEventBus.BLOCKS.put(identifier, supplier);
 		return new BlockRegistryObject(identifier);
 	}
@@ -63,6 +75,7 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public BlockRegistryObject registerBlockWithBlockItem(Identifier identifier, Supplier<Block> supplier, BiFunction<Block, ItemSettings, BlockItemExtension> function, CreativeModeTabHolder... creativeModeTabHolders) {
+		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
 		modEventBus.BLOCKS.put(identifier, supplier);
 		final BlockRegistryObject blockRegistryObject = new BlockRegistryObject(identifier);
 		modEventBus.BLOCK_ITEMS.put(identifier, () -> function.apply(blockRegistryObject.get(), new ItemSettings()));
@@ -136,10 +149,7 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public void setupPackets(Identifier identifier) {
-		networkChannel = simpleChannel.registrar(identifier.getNamespace()).versioned(String.valueOf(PROTOCOL_VERSION));
-		networkChannel.play(identifier.data, PacketObject::new, handler -> handler
-				.client(ClientPayloadHandler.getInstance()::handleData)
-				.server(ServerPayloadHandler.getInstance()::handleData));
+		ModEventBus.packetIdentifier = identifier.getNamespace();
 	}
 
 	@MappedMethod
@@ -149,11 +159,9 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public <T extends PacketHandler> void sendPacketToClient(ServerPlayerEntity serverPlayerEntity, T data) {
-		if (simpleChannel != null) {
 			final PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
 			packetBufferSender.writeString(data.getClass().getName());
 			data.write(packetBufferSender);
 			packetBufferSender.send(byteBuf -> PacketDistributor.PLAYER.with(serverPlayerEntity.data).send(new PacketObject((FriendlyByteBuf) byteBuf)), serverPlayerEntity.getServerMapped()::execute);
-		}
 	}
 }

@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 public final class ModEventBus {
 
+	public static String packetIdentifier;
 	final Map<Identifier, Supplier<Block>> BLOCKS = new HashMap<>();
 	final Map<Identifier, Supplier<BlockItemExtension>> BLOCK_ITEMS = new HashMap<>();
 	final Map<Identifier, Supplier<Item>> ITEMS = new HashMap<>();
@@ -38,29 +39,38 @@ public final class ModEventBus {
 
 	@SubscribeEvent
 	public void register(RegisterEvent event) {
-		BLOCKS.forEach((identifier, blockSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.BLOCK), identifier.data, blockSupplier);
+		/*event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.BLOCK), registry -> {
+			BLOCKS.forEach(((identifier, blockSupplier) -> {
+				registry.register(identifier.data, blockSupplier.get().data);
+			}));
 		});
 
-		ITEMS.forEach((identifier, itemSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.ITEM), identifier.data, itemSupplier);
+		event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.ITEM), registry -> {
+			ITEMS.forEach(((identifier, itemSupplier) -> {
+				registry.register(identifier.data, itemSupplier.get().data);
+			}));
+			BLOCK_ITEMS.forEach((((identifier, blockItemExtensionSupplier) -> {
+				registry.register(identifier.data, blockItemExtensionSupplier.get());
+			})));
 		});
 
-		BLOCK_ITEMS.forEach(((identifier, blockItemExtensionSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.ITEM), identifier.data, blockItemExtensionSupplier);
-		}));
+		event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.BLOCK_ENTITY_TYPE), registry -> {
+			blockEntityTypes.forEach((((identifier, blockEntityTypeSupplier) -> {
+				registry.register(identifier.data, blockEntityTypeSupplier.get());
+			})));
+		});
 
-		blockEntityTypes.forEach(((identifier, blockEntityTypeSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.BLOCK_ENTITY_TYPE), identifier.data, blockEntityTypeSupplier);
-		}));
+		event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.ENTITY_TYPE), registry -> {
+			entityTypes.forEach(((identifier, entityTypeSupplier) -> {
+				registry.register(identifier.data, entityTypeSupplier.get());
+			}));
+		});
 
-		entityTypes.forEach(((identifier, entityTypeSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.ENTITY_TYPE), identifier.data, entityTypeSupplier);
-		}));
-
-		particleTypes.forEach(((identifier, particleTypeSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.PARTICLE_TYPE), identifier.data, particleTypeSupplier);
-		}));
+		event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.PARTICLE_TYPE), registry -> {
+			particleTypes.forEach(((identifier, particleTypeSupplier) -> {
+				registry.register(identifier.data, particleTypeSupplier);
+			}));
+		});
 
 		event.register(Registries.CREATIVE_MODE_TAB, helper -> creativeModeTabs.forEach(creativeModeTabHolder -> helper.register(creativeModeTabHolder.identifier, CreativeModeTab.builder()
 				.title(Component.translatable(String.format("itemGroup.%s.%s", creativeModeTabHolder.identifier.getNamespace(), creativeModeTabHolder.identifier.getPath())))
@@ -69,8 +79,10 @@ public final class ModEventBus {
 				.build()
 		)));
 
-		soundEvents.forEach(((identifier, soundEventSupplier) -> {
-			event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.SOUND_EVENT), identifier.data, soundEventSupplier);
-		}));
+		event.register(ResourceKey.createRegistryKey((ResourceLocation) BuiltInRegistries.SOUND_EVENT), registry -> {
+			soundEvents.forEach(((identifier, soundEventSupplier) -> {
+				registry.register(identifier.data, soundEventSupplier);
+			}));
+		});*/
 	}
 }
