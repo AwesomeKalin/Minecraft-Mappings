@@ -1,26 +1,30 @@
 package org.mtr.mapping.registry;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.Block;
 import org.mtr.mapping.holder.Identifier;
 import org.mtr.mapping.tool.RegistryObject;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class BlockRegistryObject extends RegistryObject<Block> {
 
-	private final DeferredRegister<net.minecraft.world.level.block.Block> registryObject;
+	private final ResourceLocation identifier;
+	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
 
 	BlockRegistryObject(Identifier identifier) {
-		registryObject = DeferredRegister.create(BuiltInRegistries.BLOCK, identifier.data.toString());
+		this.identifier = new ResourceLocation(modid, identifier.getPath());
 	}
 
 	@MappedMethod
 	@Override
 	public Block get() {
-		return new Block(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
+		return new Block(BuiltInRegistries.BLOCK.get(identifier));
 	}
 
 	@MappedMethod

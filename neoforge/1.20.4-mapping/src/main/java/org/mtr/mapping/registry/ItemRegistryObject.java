@@ -1,7 +1,8 @@
 package org.mtr.mapping.registry;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.ModLoadingContext;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.Identifier;
 import org.mtr.mapping.holder.Item;
@@ -11,16 +12,18 @@ import java.util.function.Consumer;
 
 public final class ItemRegistryObject extends RegistryObject<Item> {
 
-	private final DeferredRegister<net.minecraft.world.item.Item> registryObject;
+	private final ResourceLocation identifier;
+	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
 
 	ItemRegistryObject(Identifier identifier) {
-		registryObject = DeferredRegister.create(BuiltInRegistries.ITEM, identifier.data.toString());
+		this.identifier = new ResourceLocation(modid, identifier.getPath());
 	}
 
 	@MappedMethod
 	@Override
 	public Item get() {
-		return new Item(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
+		System.out.println(identifier.getPath());
+		return new Item(BuiltInRegistries.ITEM.get(identifier));
 	}
 
 	@MappedMethod

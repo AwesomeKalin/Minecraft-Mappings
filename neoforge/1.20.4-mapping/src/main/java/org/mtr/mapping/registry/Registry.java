@@ -8,6 +8,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
@@ -51,7 +52,7 @@ public final class Registry extends DummyClass {
 	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, modid);
 	public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, modid);
 	public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, modid);
-	public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(BuiltInRegistries.CREATIVE_MODE_TAB, modid);
+	public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, modid);
 	public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, modid);
 
 	@MappedMethod
@@ -132,7 +133,10 @@ public final class Registry extends DummyClass {
 		CREATIVE_TABS.register(identifier.getPath(), () -> CreativeModeTab.builder()
 				.title(Component.translatable(String.format("itemGroup.%s.%s", creativeModeTabHolder.identifier.getNamespace(), creativeModeTabHolder.identifier.getPath())))
 				.icon(() -> creativeModeTabHolder.iconSupplier.get().data.copyWithCount(1))
-				.displayItems((params, output) -> creativeModeTabHolder.itemSuppliers.forEach(itemSupplier -> output.accept(itemSupplier.get().data)))
+				.displayItems((params, output) -> creativeModeTabHolder.itemSuppliers.forEach(itemSupplier -> {
+					System.out.println(new net.minecraft.world.item.ItemStack(itemSupplier.get().data, 1).isEmpty());
+					output.accept(itemSupplier.get().data);
+				}))
 				.build()
 		);
 		return creativeModeTabHolder;
