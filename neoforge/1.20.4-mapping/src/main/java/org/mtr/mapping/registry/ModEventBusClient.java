@@ -32,7 +32,7 @@ public final class ModEventBusClient {
 	}
 
 	@SubscribeEvent
-	public void registerBlockEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+	public void registerBlockEntityRenderer(EntityRenderersEvent.RegisterRenderers event) {
 		blockEntityRenderers.forEach(consumer -> consumer.accept(event));
 	}
 

@@ -5,17 +5,21 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.netty.buffer.Unpooled;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
@@ -44,13 +48,22 @@ public final class Registry extends DummyClass {
 	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
 	public static final DeferredRegister<net.minecraft.world.level.block.Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, modid);
 	public static final DeferredRegister<net.minecraft.world.item.Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, modid);
+	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, modid);
+	public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, modid);
+	public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, modid);
+	public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(BuiltInRegistries.CREATIVE_MODE_TAB, modid);
+	public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, modid);
 
 	@MappedMethod
 	public void init() {
 		IEventBus eventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
 		BLOCKS.register(eventBus);
 		ITEMS.register(eventBus);
-		NeoForge.EVENT_BUS.register(mainEventBus);
+		BLOCK_ENTITY.register(eventBus);
+		ENTITIES.register(eventBus);
+		PARTICLES.register(eventBus);
+		CREATIVE_TABS.register(eventBus);
+		SOUND_EVENTS.register(eventBus);
 		//FMLJavaModLoadingContext.get().getModEventBus().register(modEventBus);
 	}
 
@@ -88,13 +101,13 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public <T extends BlockEntityExtension> BlockEntityTypeRegistryObject<T> registerBlockEntityType(Identifier identifier, BiFunction<BlockPos, BlockState, T> function, Supplier<Block>... blockSuppliers) {
-		modEventBus.blockEntityTypes.put(identifier, () -> BlockEntityType.Builder.of((pos, state) -> function.apply(new BlockPos(pos), new BlockState(state)), HolderBase.convertArray(blockSuppliers, net.minecraft.world.level.block.Block[]::new)).build(null));
+		BLOCK_ENTITY.register(identifier.getPath(), () -> BlockEntityType.Builder.of((pos, state) -> function.apply(new BlockPos(pos), new BlockState(state)), HolderBase.convertArray(blockSuppliers, net.minecraft.world.level.block.Block[]::new)).build(null));
 		return new BlockEntityTypeRegistryObject<>(identifier);
 	}
 
 	@MappedMethod
 	public <T extends EntityExtension> EntityTypeRegistryObject<T> registerEntityType(Identifier identifier, BiFunction<EntityType<?>, World, T> function, float width, float height) {
-		modEventBus.entityTypes.put(identifier, () -> net.minecraft.world.entity.EntityType.Builder.of(getEntityFactory(function), MobCategory.MISC).sized(width, height).build(identifier.toString()));
+		ENTITIES.register(identifier.getPath(), () -> net.minecraft.world.entity.EntityType.Builder.of(getEntityFactory(function), MobCategory.MISC).sized(width, height).build(identifier.toString()));
 		return new EntityTypeRegistryObject<>(identifier);
 	}
 
@@ -109,20 +122,25 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public ParticleTypeRegistryObject registerParticleType(Identifier identifier, boolean alwaysSpawn) {
-		modEventBus.particleTypes.put(identifier, () -> new SimpleParticleType(alwaysSpawn));
+		PARTICLES.register(identifier.getPath(), () -> new SimpleParticleType(alwaysSpawn));
 		return new ParticleTypeRegistryObject(identifier);
 	}
 
 	@MappedMethod
 	public CreativeModeTabHolder createCreativeModeTabHolder(Identifier identifier, Supplier<ItemStack> iconSupplier) {
 		final CreativeModeTabHolder creativeModeTabHolder = new CreativeModeTabHolder(identifier.data, iconSupplier);
-		modEventBus.creativeModeTabs.add(creativeModeTabHolder);
+		CREATIVE_TABS.register(identifier.getPath(), () -> CreativeModeTab.builder()
+				.title(Component.translatable(String.format("itemGroup.%s.%s", creativeModeTabHolder.identifier.getNamespace(), creativeModeTabHolder.identifier.getPath())))
+				.icon(() -> creativeModeTabHolder.iconSupplier.get().data.copyWithCount(1))
+				.displayItems((params, output) -> creativeModeTabHolder.itemSuppliers.forEach(itemSupplier -> output.accept(itemSupplier.get().data)))
+				.build()
+		);
 		return creativeModeTabHolder;
 	}
 
 	@MappedMethod
 	public SoundEventRegistryObject registerSoundEvent(Identifier identifier) {
-		modEventBus.soundEvents.put(identifier, () -> new org.mtr.mapping.holder.SoundEvent(SoundEvent.createVariableRangeEvent(identifier.data)));
+		SOUND_EVENTS.register(identifier.getPath(), () -> new org.mtr.mapping.holder.SoundEvent(SoundEvent.createVariableRangeEvent(identifier.data)).data);
 		return new SoundEventRegistryObject(identifier);
 	}
 
