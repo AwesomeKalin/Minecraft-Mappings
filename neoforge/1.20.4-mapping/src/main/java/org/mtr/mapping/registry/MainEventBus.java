@@ -2,6 +2,7 @@ package org.mtr.mapping.registry;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -16,15 +17,22 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
 import org.mtr.mapping.holder.MinecraftServer;
 import org.mtr.mapping.holder.ServerPlayerEntity;
 import org.mtr.mapping.holder.ServerWorld;
 import org.mtr.mapping.holder.WorldChunk;
+import org.mtr.mapping.networking.ClientPayloadHandler;
+import org.mtr.mapping.networking.PacketObject;
+import org.mtr.mapping.networking.ServerPayloadHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.mtr.mapping.registry.Registry.PROTOCOL_VERSION;
 
 public final class MainEventBus {
 
@@ -53,6 +61,7 @@ public final class MainEventBus {
 	BiConsumer<ServerWorld, WorldChunk> chunkUnloadConsumer = (world, chunk) -> {
 	};
 	final List<Consumer<CommandDispatcher<CommandSourceStack>>> commands = new ArrayList<>();
+	public static String packetIdentifier;
 
 	@SubscribeEvent
 	public void serverStarting(ServerStartingEvent event) {
@@ -125,5 +134,13 @@ public final class MainEventBus {
 	@SubscribeEvent
 	public void registerCommands(RegisterCommandsEvent event) {
 		commands.forEach(consumer -> consumer.accept(event.getDispatcher()));
+	}
+
+	@SubscribeEvent
+	public void registerPayloads(final RegisterPayloadHandlerEvent event) {
+		final IPayloadRegistrar registrar = event.registrar(packetIdentifier).versioned(PROTOCOL_VERSION);
+		registrar.play(new ResourceLocation(packetIdentifier, "packet"), PacketObject::new, handler -> handler
+				.client(ClientPayloadHandler.getInstance()::handleData)
+				.server(ServerPayloadHandler.getInstance()::handleData));
 	}
 }

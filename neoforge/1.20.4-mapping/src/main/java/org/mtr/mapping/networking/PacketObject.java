@@ -4,6 +4,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
+import static org.mtr.mapping.registry.MainEventBus.packetIdentifier;
+
 public class PacketObject implements CustomPacketPayload {
     final FriendlyByteBuf byteBuf;
 
@@ -18,6 +20,6 @@ public class PacketObject implements CustomPacketPayload {
 
     @Override
     public ResourceLocation id() {
-        return null;
+        return new ResourceLocation(packetIdentifier, "packet");
     }
 }

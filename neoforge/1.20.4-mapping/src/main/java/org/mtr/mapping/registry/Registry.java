@@ -8,7 +8,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
@@ -20,7 +19,6 @@ import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.mtr.mapping.annotation.MappedMethod;
 import org.mtr.mapping.holder.*;
 import org.mtr.mapping.mapper.BlockEntityExtension;
@@ -32,8 +30,7 @@ import org.mtr.mapping.tool.HolderBase;
 import org.mtr.mapping.tool.PacketBufferReceiver;
 import org.mtr.mapping.tool.PacketBufferSender;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,32 +42,57 @@ public final class Registry extends DummyClass {
 	private final ModEventBus modEventBus = new ModEventBus();
 	public static final Map<String, Function<PacketBufferReceiver, ? extends PacketHandler>> packets = new HashMap<>();
 	public final EventRegistry eventRegistry = new EventRegistry(mainEventBus);
-	private static final int PROTOCOL_VERSION = 1;
-	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
-	public static final DeferredRegister<net.minecraft.world.level.block.Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, modid);
-	public static final DeferredRegister<net.minecraft.world.item.Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, modid);
-	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, modid);
-	public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES = DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, modid);
-	public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, modid);
-	public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, modid);
-	public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, modid);
+	public static final String PROTOCOL_VERSION = "1";
+	public static final Map<String, DeferredRegister<net.minecraft.world.level.block.Block>> BLOCK_REGISTERS = new HashMap<String, DeferredRegister<net.minecraft.world.level.block.Block>>();
+	public static final Map<String, DeferredRegister<net.minecraft.world.item.Item>> ITEM_REGISTERS = new HashMap<String, DeferredRegister<net.minecraft.world.item.Item>>();
+	public static final Map<String, DeferredRegister<BlockEntityType<?>>> BLOCK_ENTITY_TYPE_REGISTERS = new HashMap<String, DeferredRegister<BlockEntityType<?>>>();
+	public static final Map<String, DeferredRegister<net.minecraft.world.entity.EntityType<?>>> ENTITY_TYPE_REGISTERS = new HashMap<String, DeferredRegister<net.minecraft.world.entity.EntityType<?>>>();
+	public static final Map<String, DeferredRegister<ParticleType<?>>> PARTICLE_TYPE_REGISTERS = new HashMap<String, DeferredRegister<ParticleType<?>>>();
+	public static final Map<String, DeferredRegister<CreativeModeTab>> CREATIVE_TAB_REGISTERS = new HashMap<String, DeferredRegister<CreativeModeTab>>();
+	public static final Map<String, DeferredRegister<SoundEvent>> SOUND_EVENT_REGISTERS = new HashMap<String, DeferredRegister<SoundEvent>>();
 
 	@MappedMethod
 	public void init() {
 		IEventBus eventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
-		BLOCKS.register(eventBus);
-		ITEMS.register(eventBus);
-		BLOCK_ENTITY.register(eventBus);
-		ENTITIES.register(eventBus);
-		PARTICLES.register(eventBus);
-		CREATIVE_TABS.register(eventBus);
-		SOUND_EVENTS.register(eventBus);
-		//FMLJavaModLoadingContext.get().getModEventBus().register(modEventBus);
+		assert eventBus != null;
+
+		BLOCK_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		ITEM_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		BLOCK_ENTITY_TYPE_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		ENTITY_TYPE_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		PARTICLE_TYPE_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		CREATIVE_TAB_REGISTERS.forEach((id, register) -> {
+			register.register(eventBus);
+		});
+
+		SOUND_EVENT_REGISTERS.forEach((id, register) -> {
+            register.register(eventBus);
+		});
+		//NeoForge.EVENT_BUS.register(modEventBus);
 	}
 
 	@MappedMethod
 	public BlockRegistryObject registerBlock(Identifier identifier, Supplier<Block> supplier) {
-		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
+		if (!BLOCK_REGISTERS.containsKey(identifier.getNamespace())) {
+			BLOCK_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.BLOCK, identifier.getNamespace()));
+		}
+
+		BLOCK_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> supplier.get().data);
 		return new BlockRegistryObject(identifier);
 	}
 
@@ -81,9 +103,17 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public BlockRegistryObject registerBlockWithBlockItem(Identifier identifier, Supplier<Block> supplier, BiFunction<Block, ItemSettings, BlockItemExtension> function, CreativeModeTabHolder... creativeModeTabHolders) {
-		BLOCKS.register(identifier.getPath(), () -> supplier.get().data);
+		if (!BLOCK_REGISTERS.containsKey(identifier.getNamespace())) {
+			BLOCK_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.BLOCK, identifier.getNamespace()));
+		}
+
+		if (!ITEM_REGISTERS.containsKey(identifier.getNamespace())) {
+			ITEM_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.ITEM, identifier.getNamespace()));
+		}
+
+		BLOCK_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> supplier.get().data);
 		final BlockRegistryObject blockRegistryObject = new BlockRegistryObject(identifier);
-		ITEMS.register(identifier.getPath(), () -> function.apply(blockRegistryObject.get(), new ItemSettings()));
+		ITEM_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> function.apply(blockRegistryObject.get(), new ItemSettings()));
 		for (final CreativeModeTabHolder creativeModeTabHolder : creativeModeTabHolders) {
 			creativeModeTabHolder.itemSuppliers.add(new ItemRegistryObject(identifier)::get);
 		}
@@ -92,7 +122,11 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public ItemRegistryObject registerItem(Identifier identifier, Function<ItemSettings, Item> function, CreativeModeTabHolder... creativeModeTabHolders) {
-		ITEMS.register(identifier.getPath(), () -> function.apply(new ItemSettings()).data);
+		if (!ITEM_REGISTERS.containsKey(identifier.getNamespace())) {
+			ITEM_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.ITEM, identifier.getNamespace()));
+		}
+
+		ITEM_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> function.apply(new ItemSettings()).data);
 		final ItemRegistryObject itemRegistryObject = new ItemRegistryObject(identifier);
 		for (final CreativeModeTabHolder creativeModeTabHolder : creativeModeTabHolders) {
 			creativeModeTabHolder.itemSuppliers.add(itemRegistryObject::get);
@@ -102,13 +136,21 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public <T extends BlockEntityExtension> BlockEntityTypeRegistryObject<T> registerBlockEntityType(Identifier identifier, BiFunction<BlockPos, BlockState, T> function, Supplier<Block>... blockSuppliers) {
-		BLOCK_ENTITY.register(identifier.getPath(), () -> BlockEntityType.Builder.of((pos, state) -> function.apply(new BlockPos(pos), new BlockState(state)), HolderBase.convertArray(blockSuppliers, net.minecraft.world.level.block.Block[]::new)).build(null));
+		if (!BLOCK_ENTITY_TYPE_REGISTERS.containsKey(identifier.getNamespace())) {
+			BLOCK_ENTITY_TYPE_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, identifier.getNamespace()));
+		}
+
+		BLOCK_ENTITY_TYPE_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> BlockEntityType.Builder.of((pos, state) -> function.apply(new BlockPos(pos), new BlockState(state)), HolderBase.convertArray(blockSuppliers, net.minecraft.world.level.block.Block[]::new)).build(null));
 		return new BlockEntityTypeRegistryObject<>(identifier);
 	}
 
 	@MappedMethod
 	public <T extends EntityExtension> EntityTypeRegistryObject<T> registerEntityType(Identifier identifier, BiFunction<EntityType<?>, World, T> function, float width, float height) {
-		ENTITIES.register(identifier.getPath(), () -> net.minecraft.world.entity.EntityType.Builder.of(getEntityFactory(function), MobCategory.MISC).sized(width, height).build(identifier.toString()));
+		if (!ENTITY_TYPE_REGISTERS.containsKey(identifier.getNamespace())) {
+			ENTITY_TYPE_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, identifier.getNamespace()));
+		}
+
+		ENTITY_TYPE_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> net.minecraft.world.entity.EntityType.Builder.of(getEntityFactory(function), MobCategory.MISC).sized(width, height).build(identifier.toString()));
 		return new EntityTypeRegistryObject<>(identifier);
 	}
 
@@ -123,18 +165,25 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public ParticleTypeRegistryObject registerParticleType(Identifier identifier, boolean alwaysSpawn) {
-		PARTICLES.register(identifier.getPath(), () -> new SimpleParticleType(alwaysSpawn));
+		if (!PARTICLE_TYPE_REGISTERS.containsKey(identifier.getNamespace())) {
+			PARTICLE_TYPE_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.PARTICLE_TYPE, identifier.getNamespace()));
+		}
+
+		PARTICLE_TYPE_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> new SimpleParticleType(alwaysSpawn));
 		return new ParticleTypeRegistryObject(identifier);
 	}
 
 	@MappedMethod
 	public CreativeModeTabHolder createCreativeModeTabHolder(Identifier identifier, Supplier<ItemStack> iconSupplier) {
+		if (!CREATIVE_TAB_REGISTERS.containsKey(identifier.getNamespace())) {
+			CREATIVE_TAB_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.CREATIVE_MODE_TAB, identifier.getNamespace()));
+		}
+
 		final CreativeModeTabHolder creativeModeTabHolder = new CreativeModeTabHolder(identifier.data, iconSupplier);
-		CREATIVE_TABS.register(identifier.getPath(), () -> CreativeModeTab.builder()
+		CREATIVE_TAB_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> CreativeModeTab.builder()
 				.title(Component.translatable(String.format("itemGroup.%s.%s", creativeModeTabHolder.identifier.getNamespace(), creativeModeTabHolder.identifier.getPath())))
 				.icon(() -> creativeModeTabHolder.iconSupplier.get().data.copyWithCount(1))
 				.displayItems((params, output) -> creativeModeTabHolder.itemSuppliers.forEach(itemSupplier -> {
-					System.out.println(new net.minecraft.world.item.ItemStack(itemSupplier.get().data, 1).isEmpty());
 					output.accept(itemSupplier.get().data);
 				}))
 				.build()
@@ -144,7 +193,11 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public SoundEventRegistryObject registerSoundEvent(Identifier identifier) {
-		SOUND_EVENTS.register(identifier.getPath(), () -> new org.mtr.mapping.holder.SoundEvent(SoundEvent.createVariableRangeEvent(identifier.data)).data);
+		if (!SOUND_EVENT_REGISTERS.containsKey(identifier.getNamespace())) {
+			SOUND_EVENT_REGISTERS.put(identifier.getNamespace(), DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, identifier.getNamespace()));
+		}
+
+		SOUND_EVENT_REGISTERS.get(identifier.getNamespace()).register(identifier.getPath(), () -> new org.mtr.mapping.holder.SoundEvent(SoundEvent.createVariableRangeEvent(identifier.data)).data);
 		return new SoundEventRegistryObject(identifier);
 	}
 
@@ -162,7 +215,7 @@ public final class Registry extends DummyClass {
 
 	@MappedMethod
 	public void setupPackets(Identifier identifier) {
-		ModEventBus.packetIdentifier = identifier.getNamespace();
+		MainEventBus.packetIdentifier = identifier.getNamespace();
 	}
 
 	@MappedMethod
@@ -175,6 +228,6 @@ public final class Registry extends DummyClass {
 			final PacketBufferSender packetBufferSender = new PacketBufferSender(Unpooled::buffer);
 			packetBufferSender.writeString(data.getClass().getName());
 			data.write(packetBufferSender);
-			packetBufferSender.send(byteBuf -> PacketDistributor.PLAYER.with(serverPlayerEntity.data).send(new PacketObject((FriendlyByteBuf) byteBuf)), serverPlayerEntity.getServerMapped()::execute);
+			packetBufferSender.send(byteBuf -> PacketDistributor.PLAYER.with(serverPlayerEntity.data).send(new PacketObject(new FriendlyByteBuf(byteBuf))), serverPlayerEntity.getServerMapped()::execute);
 	}
 }

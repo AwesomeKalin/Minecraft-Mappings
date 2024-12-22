@@ -13,18 +13,16 @@ import java.util.function.Consumer;
 
 public final class ParticleTypeRegistryObject extends RegistryObject<DefaultParticleType> {
 
-	final Identifier identifier;
-	private final DeferredRegister<SimpleParticleType> registryObject;
+	private final ResourceLocation identifier;
 
 	ParticleTypeRegistryObject(Identifier identifier) {
-		this.identifier = identifier;
-		registryObject = DeferredRegister.create((ResourceLocation) BuiltInRegistries.PARTICLE_TYPE, identifier.data.toString());
+		this.identifier = identifier.data;
 	}
 
 	@MappedMethod
 	@Override
 	public DefaultParticleType get() {
-		return new DefaultParticleType(registryObject.getRegistry().get().get(registryObject.getRegistryName()));
+		return new DefaultParticleType((SimpleParticleType) BuiltInRegistries.PARTICLE_TYPE.get(identifier));
 	}
 
 	@MappedMethod

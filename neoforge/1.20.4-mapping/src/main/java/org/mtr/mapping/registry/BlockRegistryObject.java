@@ -15,10 +15,9 @@ import java.util.function.Consumer;
 public final class BlockRegistryObject extends RegistryObject<Block> {
 
 	private final ResourceLocation identifier;
-	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
 
 	BlockRegistryObject(Identifier identifier) {
-		this.identifier = new ResourceLocation(modid, identifier.getPath());
+		this.identifier = identifier.data;
 	}
 
 	@MappedMethod

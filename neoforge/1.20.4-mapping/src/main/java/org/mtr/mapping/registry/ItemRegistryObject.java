@@ -13,16 +13,14 @@ import java.util.function.Consumer;
 public final class ItemRegistryObject extends RegistryObject<Item> {
 
 	private final ResourceLocation identifier;
-	private static final String modid = ModLoadingContext.get().getActiveContainer().getModId();
 
 	ItemRegistryObject(Identifier identifier) {
-		this.identifier = new ResourceLocation(modid, identifier.getPath());
+		this.identifier = identifier.data;
 	}
 
 	@MappedMethod
 	@Override
 	public Item get() {
-		System.out.println(identifier.getPath());
 		return new Item(BuiltInRegistries.ITEM.get(identifier));
 	}
 
